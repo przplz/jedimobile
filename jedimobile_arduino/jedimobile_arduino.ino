@@ -7,6 +7,7 @@ float media = 0; // media dei valori di voltsum
 float minimum = 5;
 float maximum = 0;
 float variance = 0;
+int concentration = 0; // input da mindwave
 
 const int SAMPLES = 200;
 const int DELAY = 500; //us
@@ -23,14 +24,6 @@ void setup() {
 }
 
 void loop() {
-  //digitalWrite(4, HIGH);
-  //digitalWrite(7, LOW);
-  //delay(1000);
-
-  //digitalWrite(4, LOW);
-  //digitalWrite(7, HIGH);
-  //delay(1000);
-  
   contraction = analogRead(A0);
   vcontraction = 5.0*contraction/1024;
   //Serial.println(contraction);
@@ -46,10 +39,26 @@ void loop() {
   }
 
   ++counter; //sommo 1 al counter ad ogni giro
+
+  // leggiamo da seriale
+  if (Serial.available() > 0) 
+  {
+    concentration = Serial.read(); 
+    Serial.println(concentration);
+  }
   
   if (counter == SAMPLES) // comparison
-  {
+  { 
    media = voltsum/SAMPLES;
+   if (concentration > 60)
+   {
+    digitalWrite(4, HIGH);
+   }
+   else
+   {
+    digitalWrite(4, LOW);
+   }
+   
    if (minimum < MINTHR && maximum > MAXTHR)
    {
     digitalWrite(7, HIGH);    
@@ -59,9 +68,9 @@ void loop() {
     digitalWrite(7, LOW);
    }
 
-   Serial.print("media = "); Serial.print(media);
-   Serial.print(", min = "); Serial.print(minimum);
-   Serial.print(", max = "); Serial.println(maximum); // 1024 perchè legge a 10 bit
+   //Serial.print("media = "); Serial.print(media);
+   //Serial.print(", min = "); Serial.print(minimum);
+   //Serial.print(", max = "); Serial.println(maximum); // 1024 perchè legge a 10 bit
    counter = 0;
    voltsum = 0;
    minimum = 5;
