@@ -12,6 +12,10 @@ ser = serial.Serial(arduinoSerialPort, baudRate) # Establish the connection on a
 while True:
     rand = randrange(0,101,1)
     print('writing random value: %d' %rand)
-    ser.write(rand)
+    # Converting to char since we want to send the number in a single byte,
+    # otherwise we get to read 1,2 or 3 char digits on the other end of the
+    # serial, depending on the number sent.
+    ser.write(chr(rand))
+    #
     print (ser.readline())
     sleep(1)
