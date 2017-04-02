@@ -4,8 +4,13 @@
 from time import sleep # dal modulo time importo la funzione sleep
 import serial # serial: un altro modulo
 from random import randrange
+from sys import argv
 
-arduinoSerialPort = '/dev/cu.usbmodem1411'
+if (len(argv) > 1):
+    arduinoSerialPort = argv[1]
+else:
+    arduinoSerialPort = '/dev/cu.usbmodem1411'
+
 baudRate = 9600
 ser = serial.Serial(arduinoSerialPort, baudRate) # Establish the connection on a specific port
 
