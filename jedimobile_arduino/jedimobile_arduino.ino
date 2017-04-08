@@ -31,6 +31,8 @@ float lAvg = 0;
 float lMin = 5;
 float lMax = 0;
 int concentration = 0; // input da mindwave
+byte telemetry = 0;
+char outPacket[2];
 
 //
 void setup()
@@ -85,8 +87,7 @@ void loop()
   // Read concentration value from serial
   if (Serial.available() > 0) 
   {
-    concentration = Serial.read(); 
-    Serial.print((char) concentration); // echoing the value back for debugging purpose
+    concentration = Serial.read();
   }
   
   // Averages/decision computation
@@ -95,12 +96,13 @@ void loop()
     // Decide wether last read concentration was enough to power the engine ON
     if (concentration > CONCENTRATION_THRESHOLD)
     {
-      
       digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
+      bitWrite(telemetry, 0, 1);
     }
     else
     {
       digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
+      bitWrite(telemetry, 0, 0);
     }
     
     // Decide about steering right
@@ -108,10 +110,12 @@ void loop()
     if (rMin < MIN_STEER_THRESHOLD && rMax > MAX_STEER_THRESHOLD)
     {
       digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
+      bitWrite(telemetry, 2, 1);
     }
     else 
     {
       digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
+      bitWrite(telemetry, 2, 0);
     }
 
     // Decide about steering left
@@ -120,15 +124,17 @@ void loop()
 	&& !bitRead(PORTD,RIGHT_STEER_SWITCH_PIN)) // Additional condition, if right steer pin is NOT HIGH (since you cannot steer both right and left)
     {
       digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
+      bitWrite(telemetry, 1, 1);
     }
     else 
     {
       digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
+      bitWrite(telemetry, 1, 0);
     }
     
-    //Serial.print("media = "); Serial.print(rAvg);
-    //Serial.print(", min = "); Serial.print(rMin);
-    //Serial.print(", max = "); Serial.println(rMax); // 1024 perchè legge a 10 bit
+    outPacket[0] = (char) telemetry;
+    outPacket[1] = (char) concentration;
+    Serial.write(outPacket, 2);
 
     // Resetting counter/avgs/mins/maxs
     counter = 0;
