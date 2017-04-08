@@ -11,20 +11,25 @@ const int ENGINE_POWER_SWITCH_PIN = 4;
 const int RIGHT_STEER_SWITCH_PIN = 7;
 const int LEFT_STEER_SWITCH_PIN = 8;
 
-const int SAMPLES = 200; // Number of samples to average.
+const int AVG_SAMPLES = 200; // Number of samples to average.
 const int DELAY = 500; // us (micros)
-const float MINTHR = 0.8; // threshold minimo
-const float MAXTHR = 2; // threshold massimo
+const int CONCENTRATION_THRESHOLD = 60; // Concentration must be > this to power the engine
+const float MIN_STEER_THRESHOLD = 0.8; // threshold minimo
+const float MAX_STEER_THRESHOLD = 2; // threshold massimo
 
 // Variables
-int contraction;  // valore della contrazione
+int rawContraction;  // valore della contrazione
 int counter = 1; // contatore (parte da valore 1)
-float vcontraction = 0;
-float voltsum = 0; // somma dei voltaggi per farci la media (parte da valore 0)
-float media = 0; // media dei valori di voltsum
-float minimum = 5;
-float maximum = 0;
-float variance = 0;
+float rContraction = 0;
+float lContraction = 0;
+float rVoltsum = 0; // somma dei voltaggi per farci la media (parte da valore 0)
+float lVoltsum = 0;
+float rAvg = 0; // media dei valori di voltsum
+float rMin = 5;
+float rMax = 0;
+float lAvg = 0;
+float lMin = 5;
+float lMax = 0;
 int concentration = 0; // input da mindwave
 
 //
@@ -45,59 +50,96 @@ void setup()
 
 void loop()
 {
-  contraction = analogRead(RIGHT_HAND_INPUT_PIN);
-  vcontraction = 5.0*contraction/1024;
-  //Serial.println(contraction);
-  voltsum += vcontraction; //prendi la variabile e somma al valore che già c'è questa operazione
-  
-  if (vcontraction < minimum)
-  {
-    minimum = vcontraction;
-  }
-  if (vcontraction > maximum)
-  {
-    maximum = vcontraction;
-  }
-
+  // Keeping count of how many times we have performed the loop
   ++counter; //sommo 1 al counter ad ogni giro
-
-  // leggiamo da seriale
+  
+  // Read contraction from both arms
+  rawContraction = analogRead(RIGHT_HAND_INPUT_PIN);
+  rContraction = 5.0*rawContraction/1024;
+  rawContraction = analogRead(LEFT_HAND_INPUT_PIN);
+  lContraction = 5.0*rawContraction/1024;
+  
+  // Summing voltages into their accumulators for averages
+  rVoltsum += rContraction; //prendi la variabile e somma al valore che già c'è questa operazione
+  lVoltsum += lContraction;
+  
+  // Updating min/max for right arm
+  if (rContraction < rMin)
+  {
+    rMin = rContraction;
+  }
+  if (rContraction > rMax)
+  {
+    rMax = rContraction;
+  }
+  // Updating min/max for left arm
+  if (lContraction < lMin)
+  {
+    lMin = lContraction;
+  }
+  if (lContraction > lMax)
+  {
+    lMax = lContraction;
+  }
+  
+  // Read concentration value from serial
   if (Serial.available() > 0) 
   {
     concentration = Serial.read(); 
     Serial.print((char) concentration); // echoing the value back for debugging purpose
   }
   
-  if (counter == SAMPLES) // comparison
+  // Averages/decision computation
+  if (counter == AVG_SAMPLES) // comparison: is it time to calculate the averages?
   { 
-   media = voltsum/SAMPLES;
-   if (concentration > 60)
-   {
-    digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
-   }
-   else
-   {
-    digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
-   }
-   
-   if (minimum < MINTHR && maximum > MAXTHR)
-   {
-    digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
-   }
-   else 
-   {
-    digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
-   }
+    // Decide wether last read concentration was enough to power the engine ON
+    if (concentration > CONCENTRATION_THRESHOLD)
+    {
+      
+      digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
+    }
+    else
+    {
+      digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
+    }
+    
+    // Decide about steering right
+    rAvg = rVoltsum/AVG_SAMPLES;
+    if (rMin < MIN_STEER_THRESHOLD && rMax > MAX_STEER_THRESHOLD)
+    {
+      digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
+    }
+    else 
+    {
+      digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
+    }
 
-   //Serial.print("media = "); Serial.print(media);
-   //Serial.print(", min = "); Serial.print(minimum);
-   //Serial.print(", max = "); Serial.println(maximum); // 1024 perchè legge a 10 bit
-   counter = 0;
-   voltsum = 0;
-   minimum = 5;
-   maximum = 0;
-   variance = 0;
+    // Decide about steering left
+    lAvg = lVoltsum/AVG_SAMPLES;
+    if (lMin < MIN_STEER_THRESHOLD && lMax > MAX_STEER_THRESHOLD
+	&& !bitRead(PORTD,RIGHT_STEER_SWITCH_PIN)) // Additional condition, if right steer pin is NOT HIGH (since you cannot steer both right and left)
+    {
+      digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
+    }
+    else 
+    {
+      digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
+    }
+    
+    //Serial.print("media = "); Serial.print(rAvg);
+    //Serial.print(", min = "); Serial.print(rMin);
+    //Serial.print(", max = "); Serial.println(rMax); // 1024 perchè legge a 10 bit
+
+    // Resetting counter/avgs/mins/maxs
+    counter = 0;
+    rVoltsum = 0;
+    rMin = 5;
+    rMax = 0;
+    lVoltsum = 0;
+    lMin = 5;
+    lMax = 0;
   }
-
+  
+  // Wait before triggering another loop
   delayMicroseconds(DELAY);
 }
