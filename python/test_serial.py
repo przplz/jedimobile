@@ -42,4 +42,4 @@ while True:
             display("FAIL! Sent-recv value mismatch: %03d != %03d\n" %(rand, recvValue))
     else:
         display("Error, unable to send (sent=%d)" %sent)
-    sleep(0.001)
+    sleep(0.1)
