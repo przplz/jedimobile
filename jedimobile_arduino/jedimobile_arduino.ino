@@ -65,7 +65,7 @@ void loop()
   if (Serial.available() > 0) 
   {
     concentration = Serial.read(); 
-    Serial.print((char) concentration); // echoing the value back for debug purpose
+    Serial.print((char) concentration); // echoing the value back for debugging purpose
   }
   
   if (counter == SAMPLES) // comparison
