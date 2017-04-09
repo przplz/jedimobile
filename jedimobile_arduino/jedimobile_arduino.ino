@@ -31,8 +31,8 @@ float lAvg = 0;
 float lMin = 5;
 float lMax = 0;
 int concentration = 0; // input da mindwave
-byte telemetry = 0;
-char outPacket[2];
+byte telemetry = 0; // cosa sta facendo
+char outPacket[2]; // l'array dei 2 byte che rimanda: 1 byte è il valore di mindwave, l'altro è il valore di telemetry
 
 //
 void setup()
@@ -40,7 +40,7 @@ void setup()
   // Init input
   pinMode(RIGHT_HAND_INPUT_PIN, INPUT); // dove mettiamo l'input e da dove lo leggiamo
   pinMode(LEFT_HAND_INPUT_PIN, INPUT);
-  Serial.begin(9600);
+  Serial.begin(9600); // inizializzazione della seriale, manda 9600 byte al secondo
   // Init output
   pinMode(ENGINE_POWER_SWITCH_PIN, OUTPUT);
   pinMode(RIGHT_STEER_SWITCH_PIN, OUTPUT);
@@ -53,7 +53,7 @@ void setup()
 void loop()
 {
   // Keeping count of how many times we have performed the loop
-  ++counter; //sommo 1 al counter ad ogni giro
+  ++counter;         //sommo 1 al counter ad ogni giro
   
   // Read contraction from both arms
   rawContraction = analogRead(RIGHT_HAND_INPUT_PIN);
@@ -85,9 +85,9 @@ void loop()
   }
   
   // Read concentration value from serial
-  if (Serial.available() > 0) 
+  if (Serial.available() > 0) // vede se c'è qualcosa in arrivo da python
   {
-    concentration = Serial.read();
+    concentration = Serial.read(); // parentesi vuote si usano quando la funzione non ha bisogno di parametri, tipo in questo caso legge il valore di seriale
   }
   
   // Averages/decision computation
@@ -97,7 +97,7 @@ void loop()
     if (concentration > CONCENTRATION_THRESHOLD)
     {
       digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
-      bitWrite(telemetry, 0, 1);
+      bitWrite(telemetry, 0, 1); // +3 valori: byte su cui scrivo i bit, il bit che voglio scrivere e il valore che deve avere
     }
     else
     {
