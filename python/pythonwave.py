@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 
-## prova programmino in python
-## vogliamo mandare all'arduino dei valori a caso da 0 a 100 e stampare quello che riceviamo da arduino, sostituisce il mindwave per ora :)
-
 from time import sleep, time # dal modulo time importo la funzione sleep
 import mindwave
 import serial # serial: un altro modulo
 from random import randrange
 from sys import argv, stdout
 
-MAX_DISPLAY_WIDTH = 80
 #
+LOOP_DELAY_SEC = 0.01 # Seconds
 INPUT_PACKET_SIZE = 2 # Bytes
 #
 
-_device = '/dev/tty.MindWaveMobile-DevA'
-
-
+ARDUINO_DEFAULT_DEVICE = '/dev/cu.usbmodem1411'
+MINDWAVE_DEFAULT_DEVICE = '/dev/tty.MindWaveMobile-DevA'
 
 # Protocol specification:
 # - byte 0:
 #     *0 = engineOnOffFlag
 #     *1 = steeringLeftFlag
 #     *2 = steeringRightFlag
+#     *3 = <reserved-for-future-use>
+#     *4 = <reserved-for-future-use>
+#     *5 = <reserved-for-future-use>
+#     *6 = 1 (constant)
+#     *7 = 1 (constant)
 # - byte 1:
 #     Echoed concentration value short integer
 #
@@ -69,29 +70,43 @@ def sendOverSerial(text):
     """
     return ser.write(text.encode(encoding='ascii')) #cambia l'encoding e dà il valore di write all'arduino già nell'encoding giusto
 
+def isTelemetryByte(byte):
+    """
+    Checks if the given byte is a telemetry one (returns True) or something else (returns False).
+    """
+    return (getBit(byte, 6) and getBit(byte, 7))
+
 def loop(ser, headset, display, timeIndicator):
     curTimeIndicator = int(time()) % 10 # Changes when the clock second changes. Time dà il tempo in secondi
-    # Echo test
     #
+    # If in simulator mode, generate a random number, else get attention.
+    if (headset):
+        concentration = headset.attention
+    else:
+        concentration = randrange(0,101,1)
     # Converting to char since we want to send the number in a single byte,
     # otherwise we get to read 1,2 or 3 char digits on the other end of the
     # serial, depending on the number sent.
     if (curTimeIndicator != timeIndicator):
-        sent = sendOverSerial(chr(headset.attention)) # chr di un numero dà il carattere ascii corrispondente a quel numero
+        sent = sendOverSerial(chr(concentration)) # chr di un numero dà il carattere ascii corrispondente a quel numero
     else:
         sent = 0
     #
     
     # Getting telemetry data
     if (ser.in_waiting >= INPUT_PACKET_SIZE):
-        inTelemetryPacket = ser.read(INPUT_PACKET_SIZE) # ser.read preleva i byte dal buffer (in questo caso ne prende 2 come definito sopra in input packet size)
-        #checkBit = getBit(inTelemetryPacket[0], 7)
-        #if (checkBit != 0 and ser.in_waiting > 0):
-          #  ser.read(1) # If out of sync, skip 1 byte and go to next loop
-           # return curTimeIndicator
-        isEngineOn = getBit(inTelemetryPacket[0], 0)
-        isSteeringLeft = getBit(inTelemetryPacket[0], 1)
-        isSteeringRight = getBit(inTelemetryPacket[0], 2)
+        incomingPacket = ser.read(INPUT_PACKET_SIZE) # ser.read preleva i byte dal buffer (in questo caso ne prende 2 come definito sopra in input packet size)
+        telemetry = incomingPacket[0]
+        # Check if we are in sync
+        if not isTelemetryByte(telemetry):
+            if (ser.in_waiting > 0):
+                ser.read(1) # If out of sync, skip 1 byte and go to next loop
+            return curTimeIndicator
+        #
+        # Parsing and displaying telemetry
+        isEngineOn = getBit(telemetry, 0)
+        isSteeringLeft = getBit(telemetry, 1)
+        isSteeringRight = getBit(telemetry, 2)
 
         display.clear()
 
@@ -122,26 +137,34 @@ def loop(ser, headset, display, timeIndicator):
         display.append(' ')
         display.append(rightArrow)
         #
-        #print([int(x) for x in inTelemetryPacket]) #debug
-        concentration = int(inTelemetryPacket[1])
+        # Parsing and display the concentration level echoed back
+        concentration = int(incomingPacket[1])
         display.append("\t(conc: %3d)" %(concentration))
         display.display()
+        #
         ser.reset_input_buffer() # Deliberately dropping data, we want to process at our own pace...
 
-    sleep(0.01)
     return curTimeIndicator
     
 
 if __name__ == "__main__":
     if (len(argv) > 1):
         arduinoSerialPort = argv[1]
+        if (len(argv) > 2):
+            mindwaveSerialPort = argv[2] # "simulator" is an accepted value, which triggers sendin random concentration values
+        else:
+            mindwaveSerialPort = MINDWAVE_DEFAULT_DEVICE
     else:
-        arduinoSerialPort = '/dev/cu.usbmodem1411'
+        arduinoSerialPort = ARDUINO_DEFAULT_DEVICE
 
     baudRate = 9600
     ser = serial.Serial(arduinoSerialPort, baudRate) # Establish the connection on a specific port
-    headset = mindwave.Headset(_device, '625f')
+    if (mindwaveSerialPort == "simulator"):
+        headset = None
+    else:
+        headset = mindwave.Headset(mindwaveSerialPort, '625f')
     display = Display()
     timeIndicator = 0
     while True:
         timeIndicator = loop(ser, headset, display, timeIndicator)
+        sleep(LOOP_DELAY_SEC)

@@ -48,6 +48,9 @@ void setup()
   digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
   digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
   digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
+  // Initialize telemetry 6-th and 7-th bits to be 1 (necessary for checks on the receiver side)
+  bitWrite(telemetry, 6, 1);
+  bitWrite(telemetry, 7, 1);
 }
 
 void loop()
