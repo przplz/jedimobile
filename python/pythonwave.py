@@ -61,14 +61,14 @@ def getBit(byte, bitNumber):
     """
     Returns the value of the bitNumber-th bit of the given byte.
     """
-    return (byte >> bitNumber) & 0b1; # shifto del numero di bit che mi servono per avere il bit di interesse nella posizione più a destra e poi lo prendo come valore (scarto gli altri bit sia a dx che a sx di quello che voglio)
+    return (byte >> bitNumber) & 0b1; # shifto del numero di bit che mi servono per avere il bit di interesse nella posizione piu a destra e poi lo prendo come valore (scarto gli altri bit sia a dx che a sx di quello che voglio)
 
 def sendOverSerial(text):
     """
     Sends the given text over the serial connection, converting it to ascii encoding.
     The number of bytes sent is returned. Because python represents the char in UTF8
     """
-    return ser.write(text.encode(encoding='ascii')) #cambia l'encoding e dà il valore di write all'arduino già nell'encoding giusto
+    return ser.write(text.encode(encoding='ascii')) #cambia l'encoding e da il valore di write all'arduino gia nell'encoding giusto
 
 def isTelemetryByte(byte):
     """
@@ -77,7 +77,7 @@ def isTelemetryByte(byte):
     return (getBit(byte, 6) and getBit(byte, 7))
 
 def loop(ser, headset, display, timeIndicator):
-    curTimeIndicator = int(time()) % 10 # Changes when the clock second changes. Time dà il tempo in secondi
+    curTimeIndicator = int(time()) % 10 # Changes when the clock second changes. Time da il tempo in secondi
     #
     # If in simulator mode, generate a random number, else get attention.
     if (headset):
@@ -88,7 +88,7 @@ def loop(ser, headset, display, timeIndicator):
     # otherwise we get to read 1,2 or 3 char digits on the other end of the
     # serial, depending on the number sent.
     if (curTimeIndicator != timeIndicator):
-        sent = sendOverSerial(chr(concentration)) # chr di un numero dà il carattere ascii corrispondente a quel numero
+        sent = sendOverSerial(chr(concentration)) # chr di un numero da il carattere ascii corrispondente a quel numero
     else:
         sent = 0
     #

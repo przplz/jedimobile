@@ -45,9 +45,9 @@ void setup()
   pinMode(ENGINE_POWER_SWITCH_PIN, OUTPUT);
   pinMode(RIGHT_STEER_SWITCH_PIN, OUTPUT);
   pinMode(LEFT_STEER_SWITCH_PIN, OUTPUT);
-  digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
-  digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
-  digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
+  digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
+  digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
+  digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
   // Initialize telemetry 6-th and 7-th bits to be 1 (necessary for checks on the receiver side)
   bitWrite(telemetry, 6, 1);
   bitWrite(telemetry, 7, 1);
@@ -99,12 +99,12 @@ void loop()
     // Decide wether last read concentration was enough to power the engine ON
     if (concentration > CONCENTRATION_THRESHOLD)
     {
-      digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
+      digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
       bitWrite(telemetry, 0, 1); // +3 valori: byte su cui scrivo i bit, il bit che voglio scrivere e il valore che deve avere
     }
     else
     {
-      digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
+      digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
       bitWrite(telemetry, 0, 0);
     }
     
@@ -112,12 +112,12 @@ void loop()
     rAvg = rVoltsum/AVG_SAMPLES;
     if (rMin < MIN_STEER_THRESHOLD && rMax > MAX_STEER_THRESHOLD)
     {
-      digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
+      digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
       bitWrite(telemetry, 2, 1);
     }
     else 
     {
-      digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
+      digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
       bitWrite(telemetry, 2, 0);
     }
 
@@ -126,12 +126,12 @@ void loop()
     if (lMin < MIN_STEER_THRESHOLD && lMax > MAX_STEER_THRESHOLD
 	&& !bitRead(PORTD,RIGHT_STEER_SWITCH_PIN)) // Additional condition, if right steer pin is NOT HIGH (since you cannot steer both right and left)
     {
-      digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
+      digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
       bitWrite(telemetry, 1, 1);
     }
     else 
     {
-      digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
+      digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
       bitWrite(telemetry, 1, 0);
     }
     
