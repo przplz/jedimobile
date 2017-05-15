@@ -1,23 +1,21 @@
-# Porting of mindwave.py to Python3
-
-import select, serial, threading, binascii
+import select, serial, threading
 
 # Byte codes
-CONNECT              = 0xc0
-DISCONNECT           = 0xc1
-AUTOCONNECT          = 0xc2
-SYNC                 = 0xaa
-EXCODE               = 0x55
-POOR_SIGNAL          = 0x02
-ATTENTION            = 0x04
-MEDITATION           = 0x05
-BLINK                = 0x16
-HEADSET_CONNECTED    = 0xd0
-HEADSET_NOT_FOUND    = 0xd1
-HEADSET_DISCONNECTED = 0xd2
-REQUEST_DENIED       = 0xd3
-STANDBY_SCAN         = 0xd4
-RAW_VALUE            = 0x80
+CONNECT              = '\xc0'
+DISCONNECT           = '\xc1'
+AUTOCONNECT          = '\xc2'
+SYNC                 = '\xaa'
+EXCODE               = '\x55'
+POOR_SIGNAL          = '\x02'
+ATTENTION            = '\x04'
+MEDITATION           = '\x05'
+BLINK                = '\x16'
+HEADSET_CONNECTED    = '\xd0'
+HEADSET_NOT_FOUND    = '\xd1'
+HEADSET_DISCONNECTED = '\xd2'
+REQUEST_DENIED       = '\xd3'
+STANDBY_SCAN         = '\xd4'
+RAW_VALUE            = '\x80'
 
 # Status codes
 STATUS_CONNECTED     = 'connected'
@@ -43,9 +41,9 @@ class Headset(object):
             s = self.headset.dongle
 
             # Re-apply settings to ensure packet stream
-            s.write(bytes([DISCONNECT]))
+            s.write(DISCONNECT)
             d = s.getSettingsDict()
-            for i in range(2):
+            for i in xrange(2):
                 d['rtscts'] = not d['rtscts']
                 s.applySettingsDict(d)
 
@@ -55,7 +53,7 @@ class Headset(object):
                     if s.read() == SYNC and s.read() == SYNC:
                         # Packet found, determine plength
                         while True:
-                            plength = s.read()
+                            plength = ord(s.read())
                             if plength != 170:
                                 break
                         if plength > 170:
@@ -65,10 +63,10 @@ class Headset(object):
                         payload = s.read(plength)
 
                         # Verify its checksum
-                        val = sum(b for b in payload[:-1])
+                        val = sum(ord(b) for b in payload[:-1])
                         val &= 0xff
                         val = ~val & 0xff
-                        chksum = s.read()
+                        chksum = ord(s.read())
 
                         #if val == chksum:
                         if True: # ignore bad checksums
@@ -95,7 +93,7 @@ class Headset(object):
                         code, payload = payload[0], payload[1:]
                     except IndexError:
                         pass
-                if code < 0x80:
+                if ord(code) < 0x80:
                     # This is a single-byte code
                     try:
                         value, payload = payload[0], payload[1:]
@@ -104,7 +102,7 @@ class Headset(object):
                     if code == POOR_SIGNAL:
                         # Poor signal
                         old_poor_signal = self.headset.poor_signal
-                        self.headset.poor_signal = value
+                        self.headset.poor_signal = ord(value)
                         if self.headset.poor_signal > 0:
                             if old_poor_signal == 0:
                                 for handler in \
@@ -119,30 +117,30 @@ class Headset(object):
                                             self.headset.poor_signal)
                     elif code == ATTENTION:
                         # Attention level
-                        self.headset.attention = value
+                        self.headset.attention = ord(value)
                         for handler in self.headset.attention_handlers:
                             handler(self.headset, self.headset.attention)
                     elif code == MEDITATION:
                         # Meditation level
-                        self.headset.meditation = value
+                        self.headset.meditation = ord(value)
                         for handler in self.headset.meditation_handlers:
                             handler(self.headset, self.headset.meditation)
                     elif code == BLINK:
                         # Blink strength
-                        self.headset.blink = value
+                        self.headset.blink = ord(value)
                         for handler in self.headset.blink_handlers:
                             handler(self.headset, self.headset.blink)
                 else:
                     # This is a multi-byte code
                     try:
-                        vlength, payload = payload[0], payload[1:]
+                        vlength, payload = ord(payload[0]), payload[1:]
                     except IndexError:
                         continue
                     value, payload = payload[:vlength], payload[vlength:]
                     # Multi-byte EEG and Raw Wave codes not included
                     # Raw Value added due to Mindset Communications Protocol
                     if code == RAW_VALUE:
-                        raw=value[0]*256+value[1]
+                        raw=ord(value[0])*256+ord(value[1])
                         if (raw>=32768):
                             raw=raw-65536
                         self.headset.raw_value = raw
@@ -181,7 +179,7 @@ class Headset(object):
                     elif code == STANDBY_SCAN:
                         # Standby/Scan mode
                         try:
-                            byte = value[0]
+                            byte = ord(value[0])
                         except IndexError:
                             byte = None
                         if byte:
@@ -241,16 +239,15 @@ class Headset(object):
             if not headset_id:
                 self.autoconnect()
                 return
-        # self.dongle.write(''.join([CONNECT, headset_id.decode('hex')]))
-        self.dongle.write(bytes([CONNECT]) + binascii.a2b_hex(headset_id.encode('ascii'))) # To Python3
+        self.dongle.write(''.join([CONNECT, headset_id.decode('hex')]))
 
     def autoconnect(self):
         """Automatically connect device to headset."""
-        self.dongle.write(bytes([AUTOCONNECT]))
+        self.dongle.write(AUTOCONNECT)
 
     def disconnect(self):
         """Disconnect the device from the headset."""
-        self.dongle.write(bytes([DISCONNECT]))
+        self.dongle.write(DISCONNECT)
 
     def serial_open(self):
         """Open the serial connection and begin listening for data."""
