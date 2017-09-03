@@ -111,6 +111,7 @@ void loop()
 {
   int rightActivation = 0;
   int leftActivation = 0;
+  bool isSteeringRight = false;
 
   smoothingLoop(& rightActivation, & leftActivation);
   
@@ -127,6 +128,7 @@ void loop()
     bitWrite(telemetry, 0, 0);
     pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 2, 0);
+    isSteeringRight = false;
     pinMode(LEFT_STEER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 1, 0);
   }
@@ -151,15 +153,17 @@ void loop()
       pinMode(RIGHT_STEER_SWITCH_PIN, OUTPUT);
       digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
       bitWrite(telemetry, 2, 1);
+      isSteeringRight = true;
     }
     else 
     {
       pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
       bitWrite(telemetry, 2, 0);
+      isSteeringRight = false;
     }
 
     // Decide about steering left
-    if (leftActivation > STEER_THRESHOLD && !bitRead(PORTD,RIGHT_STEER_SWITCH_PIN)) // Additional condition, if right steer pin is NOT HIGH (since you cannot steer both right and left)
+    if (leftActivation > STEER_THRESHOLD && !isSteeringRight) // Additional condition, if noth right steering (since you cannot steer both right and left)
     {
       pinMode(LEFT_STEER_SWITCH_PIN, OUTPUT);
       digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
