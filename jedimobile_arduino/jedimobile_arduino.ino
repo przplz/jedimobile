@@ -33,9 +33,6 @@ void setup()
   pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
   pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
   pinMode(LEFT_STEER_SWITCH_PIN, INPUT);
-  //digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
-  //digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
-  //digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
   // Initialize telemetry 6-th and 7-th bits to be 1 (necessary for checks on the receiver side)
   bitWrite(telemetry, 6, 1);
   bitWrite(telemetry, 7, 1);
@@ -126,11 +123,11 @@ void loop()
   // Decide to brake: if both arms are contracted, the machine will shut engine off (panic button)
   if (rightActivation > STEER_THRESHOLD && leftActivation > STEER_THRESHOLD)
   {
-    digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
+    pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 0, 0);
-    digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
+    pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 2, 0);
-    digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
+    pinMode(LEFT_STEER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 1, 0);
   }
   else 
@@ -145,7 +142,6 @@ void loop()
     else
     {
       pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
-      //digitalWrite(ENGINE_POWER_SWITCH_PIN, LOW);
       bitWrite(telemetry, 0, 0);
     }
     
@@ -158,8 +154,7 @@ void loop()
     }
     else 
     {
-       pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
-      //digitalWrite(RIGHT_STEER_SWITCH_PIN, LOW);
+      pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
       bitWrite(telemetry, 2, 0);
     }
 
@@ -173,7 +168,6 @@ void loop()
     else 
     {
       pinMode(LEFT_STEER_SWITCH_PIN, INPUT);
-      //digitalWrite(LEFT_STEER_SWITCH_PIN, LOW);
       bitWrite(telemetry, 1, 0);
     }
   }
