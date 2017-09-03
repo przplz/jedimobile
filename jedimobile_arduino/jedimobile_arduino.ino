@@ -26,8 +26,8 @@ char outPacket[2]; // l'array dei 2 byte che rimanda: 1 byte è il valore di min
 void setup()
 {
   // Init input
-  pinMode(RIGHT_HAND_INPUT_PIN, INPUT); // dove mettiamo l'input e da dove lo leggiamo
-  pinMode(LEFT_HAND_INPUT_PIN, INPUT);
+  pinMode(RIGHT_INPUT_PIN, INPUT); // dove mettiamo l'input e da dove lo leggiamo
+  pinMode(LEFT_INPUT_PIN, INPUT);
   Serial.begin(9600); // inizializzazione della seriale, manda 9600 byte al secondo
   // Init output
   pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
