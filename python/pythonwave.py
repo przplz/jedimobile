@@ -76,11 +76,11 @@ def isTelemetryByte(byte):
     """
     return (getBit(byte, 6) and getBit(byte, 7))
 
-def reconnectHeadset():
+def reconnectHeadset(headset):
     print("Reconnecting...")
-    _headset.disconnect()
+    headset.disconnect()
     time.sleep(2)
-    _headset.connect()
+    headset.connect()
     time.sleep(1)
 
 def loop(ser, headset, display, timeIndicator):
@@ -91,7 +91,7 @@ def loop(ser, headset, display, timeIndicator):
         status = headset.status
         if (status != mindwave.STATUS_CONNECTED):
             print("Not connected... [%s]" %(status))
-            reconnectHeadset()
+            reconnectHeadset(headset)
         else:
             concentration = headset.attention
     else:
