@@ -14,7 +14,7 @@ const int LEFT_STEER_SWITCH_PIN = 8;
 const int AVG_SAMPLES = 100; // Number of samples to average.
 const int SMOOTHING_SAMPLES = 10;
 const int DELAY = 50; // us (micros)
-const int CONCENTRATION_THRESHOLD = 60; // Concentration must be > this to power the engine
+const int CONCENTRATION_THRESHOLD = 50; // Concentration must be > this to power the engine
 const int STEER_THRESHOLD = 50; // threshold to steer
 
 // Variables
