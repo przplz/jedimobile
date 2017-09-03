@@ -76,12 +76,24 @@ def isTelemetryByte(byte):
     """
     return (getBit(byte, 6) and getBit(byte, 7))
 
+def reconnectHeadset():
+    print("Reconnecting...")
+    _headset.disconnect()
+    time.sleep(2)
+    _headset.connect()
+    time.sleep(1)
+
 def loop(ser, headset, display, timeIndicator):
     curTimeIndicator = int(time()) % 10 # Changes when the clock second changes. Time da il tempo in secondi
     #
     # If in simulator mode, generate a random number, else get attention.
     if (headset):
-        concentration = headset.attention
+        status = headset.status
+        if (status != mindwave.STATUS_CONNECTED):
+            print("Not connected... [%s]" %(status))
+            reconnectHeadset()
+        else:
+            concentration = headset.attention
     else:
         concentration = randrange(0,101,1)
     # Converting to char since we want to send the number in a single byte,
@@ -163,6 +175,8 @@ if __name__ == "__main__":
         headset = None
     else:
         headset = mindwave.Headset(mindwaveSerialPort, '625f')
+        headset.connect()
+        sleep(2)
     display = Display()
     timeIndicator = 0
     while True:
