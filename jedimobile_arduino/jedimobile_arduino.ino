@@ -11,7 +11,7 @@ const int ENGINE_POWER_SWITCH_PIN = 4;
 const int RIGHT_STEER_SWITCH_PIN = 7;
 const int LEFT_STEER_SWITCH_PIN = 8;
 
-const int AVG_SAMPLES = 100; // Number of samples to average.
+const int AVG_SAMPLES = 100; // Number of samples to average. 
 const int SMOOTHING_SAMPLES = 10;
 const int DELAY = 50; // us (micros)
 const int CONCENTRATION_THRESHOLD = 50; // Concentration must be > this to power the engine
