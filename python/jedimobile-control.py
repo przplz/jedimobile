@@ -4,7 +4,7 @@ from time import sleep, time # dal modulo time importo la funzione sleep
 import mindwave
 import serial # serial: un altro modulo
 from random import randrange
-from sys import argv, stdout
+from sys import argv, stdout, exit
 
 #
 LOOP_DELAY_SEC = 0.01 # Seconds
@@ -13,6 +13,8 @@ INPUT_PACKET_SIZE = 2 # Bytes
 
 ARDUINO_DEFAULT_DEVICE = '/dev/cu.usbmodem1411'
 MINDWAVE_DEFAULT_DEVICE = '/dev/tty.MindWaveMobile-DevA'
+
+USAGE = "jedimobile-control.py\tControl your RC car using THE FORCE!\nUSAGE:\n\tpython3 jedimobile-control.py <ARDUINO-DEVICE> <MIDWAVE-DEVICE>\n\t<MINDWAVE-DEVICE>: can be 'simulator'"
 
 # Protocol specification:
 # - byte 0:
@@ -167,8 +169,10 @@ if __name__ == "__main__":
         else:
             mindwaveSerialPort = MINDWAVE_DEFAULT_DEVICE
     else:
-        arduinoSerialPort = ARDUINO_DEFAULT_DEVICE
-
+        # arduinoSerialPort = ARDUINO_DEFAULT_DEVICE
+        print(USAGE)
+        exit(1)
+        
     baudRate = 9600
     ser = serial.Serial(arduinoSerialPort, baudRate) # Establish the connection on a specific port
     if (mindwaveSerialPort == "simulator"):

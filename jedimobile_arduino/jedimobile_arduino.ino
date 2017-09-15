@@ -10,12 +10,12 @@ const int LEFT_INPUT_PIN = A1;
 const int ENGINE_POWER_SWITCH_PIN = 4;
 const int RIGHT_STEER_SWITCH_PIN = 7;
 const int LEFT_STEER_SWITCH_PIN = 8;
+const int ENGINE_MONITORING_PIN = 13;
 
-const int AVG_SAMPLES = 100; // Number of samples to average. 
-const int SMOOTHING_SAMPLES = 10;
+const int SAMPLES = 1000; // Number of samples to average. 
 const int DELAY = 50; // us (micros)
 const int CONCENTRATION_THRESHOLD = 50; // Concentration must be > this to power the engine
-const int STEER_THRESHOLD = 50; // threshold to steer
+const int STEER_THRESHOLD = 20; // threshold to steer
 
 // Variables
 int concentration = 0; // input da mindwave
@@ -38,7 +38,7 @@ void setup()
   bitWrite(telemetry, 7, 1);
 }
 
-void highFreqSmoothingLoop(int * rightResult, int * leftResult)
+void highFreqSamplingLoop(int * rightResult, int * leftResult)
 {
   int rawR = 0;
   int rawL = 0;
@@ -46,7 +46,7 @@ void highFreqSmoothingLoop(int * rightResult, int * leftResult)
   int maxR = 0;
   int minL = 1024;
   int maxL = 0;
-  for (int i = 0; i < AVG_SAMPLES; ++i)
+  for (int i = 0; i < SAMPLES; ++i)
   {
     rawR = analogRead(RIGHT_INPUT_PIN);
     rawL = analogRead(LEFT_INPUT_PIN);
@@ -74,46 +74,13 @@ void highFreqSmoothingLoop(int * rightResult, int * leftResult)
   *(leftResult) = maxL - minL;
 }
 
-void smoothingLoop(int * rightResult, int * leftResult)
-{
-  int curR = 0;
-  int minR = 1024;
-  int maxR = 0;
-  int curL = 0;
-  int minL = 1024;
-  int maxL = 0;
-  
-  for (int i = 0; i < SMOOTHING_SAMPLES; ++i)
-  {
-    highFreqSmoothingLoop(&(curR), &(curL));
-    if (curR < minR)
-    {
-      minR = curR;
-    }
-    if (curR > maxR)
-    {
-      maxR = curR;
-    }
-    if (curL < minL)
-    {
-      minL = curL;
-    }
-    if (curL > maxL)
-    {
-      maxL = curL;
-    }
-  }
-  *(rightResult) = maxR - minR;
-  *(leftResult) = maxL - minL;
-}
-
 void loop()
 {
   int rightActivation = 0;
   int leftActivation = 0;
   bool isSteeringRight = false;
 
-  smoothingLoop(& rightActivation, & leftActivation);
+  highFreqSamplingLoop(& rightActivation, & leftActivation);
   
   // Read concentration value from serial
   if (Serial.available() > 0) // vede se c'è qualcosa in arrivo da python
@@ -125,6 +92,8 @@ void loop()
   if (rightActivation > STEER_THRESHOLD && leftActivation > STEER_THRESHOLD)
   {
     pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
+    pinMode(ENGINE_MONITORING_PIN, OUTPUT);
+    digitalWrite(ENGINE_MONITORING_PIN, LOW);
     bitWrite(telemetry, 0, 0);
     pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 2, 0);
@@ -139,11 +108,13 @@ void loop()
     {
       pinMode(ENGINE_POWER_SWITCH_PIN, OUTPUT);
       digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
+      digitalWrite(ENGINE_MONITORING_PIN, HIGH);
       bitWrite(telemetry, 0, 1); // +3 valori: byte su cui scrivo i bit, il bit che voglio scrivere e il valore che deve avere
     }
     else
     {
       pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
+      digitalWrite(ENGINE_MONITORING_PIN, LOW);
       bitWrite(telemetry, 0, 0);
     }
     
@@ -163,7 +134,7 @@ void loop()
     }
 
     // Decide about steering left
-    if (leftActivation > STEER_THRESHOLD && !isSteeringRight) // Additional condition, if noth right steering (since you cannot steer both right and left)
+    if (leftActivation > STEER_THRESHOLD && !isSteeringRight) // Additional condition, if not right steering (since you cannot steer both right and left)
     {
       pinMode(LEFT_STEER_SWITCH_PIN, OUTPUT);
       digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
@@ -177,5 +148,5 @@ void loop()
   }
   outPacket[0] = (char) telemetry;
   outPacket[1] = (char) concentration;
-  Serial.write(outPacket, 2);
+  Serial.write((unsigned char *) outPacket, 2);
 }
