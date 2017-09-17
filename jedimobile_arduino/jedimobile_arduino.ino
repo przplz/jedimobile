@@ -4,23 +4,28 @@
  * Arduino simple program to drive an RC car using EEG+EMG.
  */
 
+#include<SoftwareSerial.h>
+
 // Parameters
 const int RIGHT_INPUT_PIN = A0;
 const int LEFT_INPUT_PIN = A1;
 const int ENGINE_POWER_SWITCH_PIN = 4;
 const int RIGHT_STEER_SWITCH_PIN = 7;
 const int LEFT_STEER_SWITCH_PIN = 8;
-const int ENGINE_MONITORING_PIN = 13;
+const int SOFT_SERIAL_RX_PIN = 12; // not actually used
+const int SOFT_SERIAL_TX_PIN = 13;
 
 const int SAMPLES = 1000; // Number of samples to average. 
 const int DELAY = 50; // us (micros)
 const int CONCENTRATION_THRESHOLD = 50; // Concentration must be > this to power the engine
-const int STEER_THRESHOLD = 20; // threshold to steer
+const int STEER_THRESHOLD = 30; // threshold to steer
 
 // Variables
 int concentration = 0; // input da mindwave
 byte telemetry = 0; // cosa sta facendo
 char outPacket[2]; // l'array dei 2 byte che rimanda: 1 byte è il valore di mindwave, l'altro è il valore di telemetry
+
+SoftwareSerial BTSerial(SOFT_SERIAL_RX_PIN, SOFT_SERIAL_TX_PIN);
 
 //
 void setup()
@@ -29,6 +34,7 @@ void setup()
   pinMode(RIGHT_INPUT_PIN, INPUT); // dove mettiamo l'input e da dove lo leggiamo
   pinMode(LEFT_INPUT_PIN, INPUT);
   Serial.begin(9600); // inizializzazione della seriale, manda 9600 byte al secondo
+  BTSerial.begin(38400);
   // Init output
   pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
   pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
@@ -86,14 +92,13 @@ void loop()
   if (Serial.available() > 0) // vede se c'è qualcosa in arrivo da python
   {
     concentration = Serial.read(); // parentesi vuote si usano quando la funzione non ha bisogno di parametri, tipo in questo caso legge il valore di seriale
+    BTSerial.write(concentration - 128); // try sending it over Bluetooth
   }
   
   // Decide to brake: if both arms are contracted, the machine will shut engine off (panic button)
   if (rightActivation > STEER_THRESHOLD && leftActivation > STEER_THRESHOLD)
   {
     pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
-    pinMode(ENGINE_MONITORING_PIN, OUTPUT);
-    digitalWrite(ENGINE_MONITORING_PIN, LOW);
     bitWrite(telemetry, 0, 0);
     pinMode(RIGHT_STEER_SWITCH_PIN, INPUT);
     bitWrite(telemetry, 2, 0);
@@ -108,13 +113,11 @@ void loop()
     {
       pinMode(ENGINE_POWER_SWITCH_PIN, OUTPUT);
       digitalWrite(ENGINE_POWER_SWITCH_PIN, HIGH);
-      digitalWrite(ENGINE_MONITORING_PIN, HIGH);
       bitWrite(telemetry, 0, 1); // +3 valori: byte su cui scrivo i bit, il bit che voglio scrivere e il valore che deve avere
     }
     else
     {
       pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
-      digitalWrite(ENGINE_MONITORING_PIN, LOW);
       bitWrite(telemetry, 0, 0);
     }
     
