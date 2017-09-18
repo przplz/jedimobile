@@ -10,9 +10,9 @@ const int LEFT_INPUT_PIN = A1;
 
 // Remember that significant EMG activity takes place between 5Hz and 450Hz, so a sampling at 1kHz or higher is appropriate.
 // ref: https://www.researchgate.net/post/What_is_the_range_of_Human_EMG_signal_frequencies_Min_and_Max2
-const int DELAY = 50; // us (micros) OR ms (millis), depending if delay() or delayMicroseconds() is used later.
+const int DELAY = 100; // us (micros) OR ms (millis), depending if delay() or delayMicroseconds() is used later.
 
-const int SAMPLES = 1000; // Number of samples to average.
+const int SAMPLES = 500; // Number of samples to average.
 
 //
 void setup()

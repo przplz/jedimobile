@@ -184,5 +184,10 @@ if __name__ == "__main__":
     display = Display()
     timeIndicator = 0
     while True:
-        timeIndicator = loop(ser, headset, display, timeIndicator)
-        sleep(LOOP_DELAY_SEC)
+        try:
+            timeIndicator = loop(ser, headset, display, timeIndicator)
+            sleep(LOOP_DELAY_SEC)
+        except KeyboardInterrupt:
+            sendOverSerial(chr(0)) # In case we exit the program, turn the engine OFF!
+            print()
+            exit(2)
