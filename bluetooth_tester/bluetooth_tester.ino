@@ -15,18 +15,27 @@ void setup()
 
 void loop()
 {
-  if (Serial.available() > 0)
+  while (Serial.available())
   {
-    int incoming = Serial.parseInt();
-    BTSerial.write(incoming - 128);
-    Serial.println(incoming);
-    conc = incoming;
+//    int incoming = Serial.parseInt();
+//    BTSerial.write(incoming - 128);
+//    Serial.println(incoming);
+//    conc = incoming;
+    int b = Serial.parseInt();
+    Serial.print(b);
+    Serial.print(" - ");
+    int written = BTSerial.write(b);
+    Serial.println((char) written);
   }
-  else
-  {
+  //else
+  //{
     //conc = (conc + 1) % 101;
     //BTSerial.write(conc);
     //Serial.println(conc);
     //delay(1000);
+  //}
+  while (BTSerial.available())
+  {
+    Serial.println(char(BTSerial.read()));
   }
 }
