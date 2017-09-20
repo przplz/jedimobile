@@ -81,9 +81,9 @@ def isTelemetryByte(byte):
 def reconnectHeadset(headset):
     print("Reconnecting...")
     headset.disconnect()
-    time.sleep(2)
+    sleep(2)
     headset.connect()
-    time.sleep(1)
+    sleep(1)
 
 def loop(ser, headset, display, timeIndicator):
     curTimeIndicator = int(time()) % 10 # Changes when the clock second changes. Time da il tempo in secondi
