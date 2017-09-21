@@ -81,7 +81,18 @@ void handleTelemetryByte(byte telemetry)
 void handleConcentrationByte(byte incomingByte)
 {
     int conc = incomingByte & 0x7f;
-    int speed = map(conc, 0, 100, 0, 255);
+    int speed = 0;
+    int concThreshold = 25;
+    int speedThreshold = 180;
+    int maxSpeed = 245;
+    if (conc < concThreshold)
+    {
+      speed = map(conc, 0, concThreshold, 0, speedThreshold);
+    }
+    else
+    {
+      speed = map(conc, concThreshold, 100, speedThreshold, maxSpeed);
+    }
     Serial.print(conc);
     Serial.print(" (");
     Serial.print(conc);
