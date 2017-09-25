@@ -94,10 +94,11 @@ def loop(ser, headset, display, timeIndicator):
         if (status != mindwave.STATUS_CONNECTED):
             print("Not connected... [%s]" %(status))
             reconnectHeadset(headset)
+            return
         else:
             concentration = headset.attention
     else:
-        concentration = randrange(0,101,1)
+        concentration = randrange(30,101,1)
     # Converting to char since we want to send the number in a single byte,
     # otherwise we get to read 1,2 or 3 char digits on the other end of the
     # serial, depending on the number sent.

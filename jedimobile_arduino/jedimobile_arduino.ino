@@ -15,10 +15,11 @@ const int LEFT_STEER_SWITCH_PIN = 8;
 const int SOFT_SERIAL_RX_PIN = 12; // not actually used
 const int SOFT_SERIAL_TX_PIN = 13;
 
-const int SAMPLES = 500; // Number of samples to average. 
-const int DELAY = 50; // us (micros)
+const int SAMPLES = 50; // Number of samples to average. 
+const int DELAY = 1000; // us (micros)
 const int CONCENTRATION_THRESHOLD = 50; // Concentration must be > this to power the engine
-const int STEER_THRESHOLD = 50; // threshold to steer
+const int STEER_THRESHOLD_R = 120; // threshold to steer, 145, 130, 115,
+const int STEER_THRESHOLD_L = 80; // threshold to steer, 160, 135, 135,
 
 const byte ZERO_BYTE = B0;
 
@@ -101,7 +102,7 @@ void loop()
     }
     
     // Decide to brake: if both arms are contracted, the machine will shut engine off (panic button)
-    if (rightActivation > STEER_THRESHOLD && leftActivation > STEER_THRESHOLD)
+    if (rightActivation > STEER_THRESHOLD_R && leftActivation > STEER_THRESHOLD_L && 1 == 0)
     {
         pinMode(ENGINE_POWER_SWITCH_PIN, INPUT);
         bitWrite(telemetry, 0, 0); //Engine Stop
@@ -129,7 +130,7 @@ void loop()
         }
         
         // Decide about steering right
-        if (rightActivation > STEER_THRESHOLD)
+        if (rightActivation > STEER_THRESHOLD_R)
         {
             pinMode(RIGHT_STEER_SWITCH_PIN, OUTPUT);
             digitalWrite(RIGHT_STEER_SWITCH_PIN, HIGH);
@@ -144,7 +145,7 @@ void loop()
         }
 
         // Decide about steering left
-        if (leftActivation > STEER_THRESHOLD && !isSteeringRight) // Additional condition, if not right steering (since you cannot steer both right and left)
+        if (leftActivation > STEER_THRESHOLD_L && !isSteeringRight) // Additional condition, if not right steering (since you cannot steer both right and left)
         {
             pinMode(LEFT_STEER_SWITCH_PIN, OUTPUT);
             digitalWrite(LEFT_STEER_SWITCH_PIN, HIGH);
